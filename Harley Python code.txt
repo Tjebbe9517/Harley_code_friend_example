@@ -1,0 +1,63 @@
+import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
+from distinctipy import distinctipy
+
+dataX = []
+dataY = []
+
+#read csv
+with open('soldiers_2.csv', 'r', encoding='UTF-8', newline='') as csvfile:
+    data = pd.read_csv(csvfile)
+    
+    #get columns with pandas library
+    dataX = data['Dødsdato'] #could also use number of death? gotta count em first tho i think
+    dataY = data['Alder ved død']
+    dataScatter = data['dødsland']
+    xRange = range(dataX.size)
+    
+    #Sanitation: Set missing or invalid values to nothing so it can be ignored. Unifies datetimes. 
+    dataY = dataY.fillna(0);
+    dataX = pd.to_datetime(dataX, errors='coerce')
+    dataX.sort_values()
+    dataX = dataX.fillna('');
+    dataX = list(map(str, dataX))
+    dataScatter = dataScatter.fillna('');
+
+    uniqueCountries = set(dataScatter);
+    uniqueColours = distinctipy.get_colors(len(uniqueCountries));
+    
+    countryColours = {}
+    for i, country in enumerate(uniqueCountries): 
+        countryColours[country] = uniqueColours[i]
+    
+    countriesAlreadyInLegend = []
+    header = True;
+    for i, country in enumerate(dataScatter):
+        if not header:
+            if dataY[i] != 0.0:
+                if(country not in countriesAlreadyInLegend):
+                    plt.plot(dataX[i], dataY[i], marker='o', color=countryColours[country], markersize=3, label=country)
+                    countriesAlreadyInLegend.append(country)
+                else:
+                    plt.plot(dataX[i], dataY[i], marker='o', color=countryColours[country], markersize=3, label="")
+        else:
+            header = False
+           
+plt.tick_params(
+axis='x',          # changes apply to the x-axis
+which='both',      # both major and minor ticks are affected
+bottom=False,      # ticks along the bottom edge are off
+top=False,         # ticks along the top edge are off
+labelbottom=False) # labels along the bottom edge are off
+plt.yticks(np.arange(14, max(dataY), 2))
+
+plt.xlabel("Date")
+plt.ylabel("Age of Death")
+plt.title("Trend in age of fallen soldiers 1914-1918")
+
+
+plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop={'size': 4})
+
+plt.savefig('test.png', dpi=300)
+print("Done!")
